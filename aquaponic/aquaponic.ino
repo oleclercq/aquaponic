@@ -1,8 +1,8 @@
-#ifdef LIB_RTC
+/*
 #include <Wire.h>
 #include "RTClib.h" //librairie horloge rtc
 RTC_DS1307 rtc; // module rtc  ds1302
-#endif
+*/
 // ================================================================================
 // DEFINES
 #define PIN_ECLVEG        2
@@ -40,14 +40,15 @@ void eclairage(void);
 void irrigation(void);
 void lectureCapteur(void);
 
-void VANNE_ON()  {  digitalWrite(PIN_VANNE, LOW);   Serial.println("VANNE_ON");}
-void VANNE_OFF() {  digitalWrite(PIN_VANNE, HIGH);  Serial.println("VANNE_OFF");}
-void POMPE_ON()  {  digitalWrite(PIN_POMPE, LOW);   Serial.println("POMPE_ON");}
-void POMPE_OFF() {  digitalWrite(PIN_POMPE, HIGH);  Serial.println("POMPE_OFF");}
-void BULLEUR_ON()  {  digitalWrite(PIN_BULLEUR, LOW);   Serial.println("BULLEUR_ON");}
-void BULLEUR_OFF() {  digitalWrite(PIN_BULLEUR, HIGH);  Serial.println("BULLEUR_OFF");}
-void ECLAIRAGE_ON()  {  digitalWrite(PIN_ECLVEG, LOW);   Serial.println("ECLAIRAGE_ON");}
-void ECLAIRAGE_OFF() {  digitalWrite(PIN_ECLVEG, HIGH);  Serial.println("ECLAIRAGE_OFF");}
+void VANNE_ON()  {  digitalWrite(PIN_VANNE, HIGH);   Serial.println("VANNE_ON");}
+void VANNE_OFF() {  digitalWrite(PIN_VANNE, LOW);  Serial.println("VANNE_OFF");}
+
+void POMPE_ON()  {  digitalWrite(PIN_POMPE, HIGH);   Serial.println("POMPE_ON");}
+void POMPE_OFF() {  digitalWrite(PIN_POMPE, LOW);  Serial.println("POMPE_OFF");}
+void BULLEUR_ON()  {  digitalWrite(PIN_BULLEUR, HIGH);   Serial.println("BULLEUR_ON");}
+void BULLEUR_OFF() {  digitalWrite(PIN_BULLEUR, LOW);  Serial.println("BULLEUR_OFF");}
+void ECLAIRAGE_ON()  {  digitalWrite(PIN_ECLVEG, HIGH);   Serial.println("ECLAIRAGE_ON");}
+void ECLAIRAGE_OFF() {  digitalWrite(PIN_ECLVEG, LOW);  Serial.println("ECLAIRAGE_OFF");}
 
 void setup()
 {
@@ -55,7 +56,7 @@ void setup()
   FLOTTEUR_HAUT = false;
   ////////////////////horloge////////////////
   Serial.begin(VITESSE_RS232);
- #ifdef LIB_RTC
+/*
   if (! rtc.begin()) //probleme
   {
     Serial.println("Horloge RTC non trouvé");
@@ -68,7 +69,7 @@ void setup()
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
     // rtc.adjust(DateTime(2019, 4, 7, 6, 23, 0));
   }
- #endif
+*/
   pinMode( PIN_ECLVEG, OUTPUT); // eclairage led
   pinMode(PIN_POMPE, OUTPUT); // pompe a eau
   pinMode(PIN_VANNE, OUTPUT); // vanne de drainnage
@@ -115,6 +116,7 @@ ISR(TIMER1_COMPA_vect) // 16 bit timer 1 compare 1A match
   {
 	  
 	// on fait clignoter la led  toutes les 2s ( 1s ON 1s OFF)
+  /*
 	if (etatLed == 0)
 	{	digitalWrite(LED_BUILTIN,HIGH);	
 	}
@@ -122,6 +124,7 @@ ISR(TIMER1_COMPA_vect) // 16 bit timer 1 compare 1A match
 	{	digitalWrite(LED_BUILTIN,LOW);	
 	}
 	etatLed = 1- etatLed;
+ */
 	  
 	  
     // on rentre dans ce if toute les seconde.
@@ -138,21 +141,31 @@ ISR(TIMER1_COMPA_vect) // 16 bit timer 1 compare 1A match
 /* ******************************************************************************** */
 void lectureCapteur(void)
 {
+  FLOTTEUR_HAUT = ! digitalRead(PIN_FLOTTEUR_HAUT);
   FLOTTEUR_BAS  = !digitalRead(PIN_FLOTTEUR_BAS);
-  FLOTTEUR_HAUT = !digitalRead(PIN_FLOTTEUR_HAUT);
+  
 
+  if (FLOTTEUR_HAUT) { Serial.println("FLOTTEUR_HAUT ACTIVE");}
+  if (FLOTTEUR_BAS)  { Serial.println("FLOTTEUR_BAS ACTIVE");}
+  
+
+/*
+  FLOT_HAUT | FLOT_BAS | CAS Possible
+      0     |     0    |  marée basse
+      0     |     1    |  a moitié
+      1     |     0    |  Cas Impossible ( on ne peu pasavoir de l'eau en haut s'il n'y en a s pas en bas
+      1     |     1    |  bac plein
+*/
 // SECURITE
-  if( FLOTTEUR_HAUT && FLOTTEUR_BAS)
+  if( FLOTTEUR_HAUT && !FLOTTEUR_BAS)
   {
     Serial.println("ERR APP");
     POMPE_OFF();
     VANNE_ON();
     BULLEUR_OFF();
-    // eEtatBac = BAC_SE_VIDE;
   }
 
-if (FLOTTEUR_BAS) { Serial.println("FLOTTEUR_BAS");}
-if (FLOTTEUR_HAUT) { Serial.println("FLOTTEUR_HAUT");}
+
 }
 
  
@@ -179,7 +192,7 @@ void irrigation() //À quoi sert cette fonction ? c'est pas doublon par rapport 
 void fc_bac_se_vide()
 {
       Serial.println("fc_bac_se_vide");
-      if (FLOTTEUR_BAS)  {            
+      if (!FLOTTEUR_BAS)  {            
         POMPE_OFF(); 
         VANNE_OFF(); 
         eEtatBac = MAREE_BASSE; // une fois  que le bac redevient vide et que flotteur bas et le flotteur haut son declancher on passe a l'etat bac de repos
@@ -256,13 +269,11 @@ void fc_maree_haute()
 /* ******************************************************************************** */
 void eclairage(void)
 {
-#ifdef LIB_RTC
-  DateTime now = rtc.now();
+/*  DateTime now = rtc.now();
   if ((now.hour() >= 21) && (now.hour() <= 15)) //programmateur horaire pour elairage led  PROBLEME "NOW" NON RECONUE PAR LE COMPILATEUR
   {
     ECLAIRAGE_ON(); 
   } else {
     ECLAIRAGE_OFF();
-  }
-#endif
+  }*/
 }
